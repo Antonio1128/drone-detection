@@ -6,10 +6,13 @@ import threading
 import requests
 from ultralytics import YOLO
 from rf_classifier import RandomForestRFClassifier
+import hmac
+import hashlib
+
 
 SERVER_URL = "https://drone-detection-hp41.onrender.com/report/detection"
 API_KEY = "a3f8c2d1e4b7a9f0c3d6e8b1a4f7c2d5e8b3a6f9c2d5e8b1a4f7c2d5e8b3a6f9"
-
+HMAC_SECRET= "ocheiesupersercreta1230"
 
 def trimite_la_server(frame, confidence, rf_activ):
     try:
@@ -17,11 +20,15 @@ def trimite_la_server(frame, confidence, rf_activ):
         image_bytes = buffer.tobytes()
         sensor_label = "AI+RF" if rf_activ else "AI"
         filename = f"alerta_{sensor_label}_{time.strftime('%Y%m%d_%H%M%S')}.jpg"
+        timestamp_req = time.strftime("%Y-%m-%dT%H:%M:%S")
+        message = f"{timestamp_req}:true:{str(round(confidence, 4))}"
+        signature = hmac.new(HMAC_SECRET.encode(), message.encode(), hashlib.sha256).hexdigest()
+        
         response = requests.post(
             SERVER_URL,
-            data={"is_drone": "true", "confidence": str(round(confidence, 4))},
+            data={"is_drone": "true", "confidence": str(round(confidence, 4)), "signature": signature   },
             files={"image": (filename, image_bytes, "image/jpeg")},
-            headers={"x-api-key": API_KEY},
+            headers={"x-api-key": API_KEY,"x-timestamp": timestamp_req,"x-signature": signature},
             timeout=10,
         )
         if response.status_code == 200:

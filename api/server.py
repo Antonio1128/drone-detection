@@ -4,11 +4,12 @@ from datetime import datetime, timezone
 from typing import Optional
 from supabase import create_client
 import os
-
+import hmac
+import hashlib
 API_KEY = os.environ.get("API_KEY", "a3f8c2d1e4b7a9f0c3d6e8b1a4f7c2d5e8b3a6f9c2d5e8b1a4f7c2d5e8b3a6f9")
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://huqbekfyoorzveogebzn.supabase.co")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1cWJla2Z5b29yenZlb2dlYnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDI1NTEsImV4cCI6MjA5NjMxODU1MX0.6OjrlcpmtZZHXu-frTvXVL5ifkyXoxpq9MZpUKWx3po")
-
+HMAC_SECRET = os.environ.get("HMAC_SECRET", "ocheiesupersercreta1230")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
@@ -38,9 +39,16 @@ async def report_detection(
     confidence: float = Form(...),
     image: Optional[UploadFile] = File(None),
     x_api_key: str = Header(None),
+    x_timestamp: str = Header(None),
+    x_signature: str = Header(None),
 ):
     if x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
+
+    mesaj = f"{x_timestamp}:true:{str(round(confidence, 4))}"
+    expected = hmac.new(HMAC_SECRET.encode(), mesaj.encode(), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected, x_signature or ""):
+        raise HTTPException(status_code=403, detail="Invalid signature")
 
     timestamp = datetime.now(timezone.utc).isoformat()
     filename = image.filename if image else "no_image"
