@@ -31,7 +31,8 @@ def trimite_la_server(frame, confidence, rf_activ):
         print(f"[CLOUD] Eroare conexiune: {e}")
 
 # 1. Încărcăm modelul tău antrenat pe drone
-model = YOLO(r"F:\Main\facultate\dronedetect\prj\runs\detect\train-7\weights\best.pt")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+model = YOLO(os.path.join(BASE_DIR, "runs", "detect", "train-7", "weights", "best.pt"))
 
 # 2. Inițializăm filtrul de fundal (Toleranță mare la zgomot)
 back_sub = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=50, detectShadows=False)
@@ -40,7 +41,7 @@ back_sub = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=50, dete
 rf_classifier = RandomForestRFClassifier()
 
 # 4. Folder pentru alerte salvate automatic
-output_folder = r"F:\Main\facultate\dronedetect\prj\alerte_drone"
+output_folder = os.path.join(BASE_DIR, "alerte_drone")
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)
 
