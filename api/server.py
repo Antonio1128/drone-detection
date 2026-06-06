@@ -52,12 +52,20 @@ async def report_detection(
 
     timestamp = datetime.now(timezone.utc).isoformat()
     filename = image.filename if image else "no_image"
+    image_url = None
+
+    if image:
+        image_bytes = await image.read()
+        storage_path = f"{filename}"
+        supabase.storage.from_("alerts").upload(storage_path, image_bytes, {"content-type": "image/jpeg"})
+        image_url = f"{SUPABASE_URL}/storage/v1/object/public/alerts/{storage_path}"
 
     result = {
         "is_drone": is_drone,
         "confidence": round(confidence, 4),
         "timestamp": timestamp,
         "filename": filename,
+        "image_url": image_url,
     }
     supabase.table("detections").insert(result).execute()
     return result
