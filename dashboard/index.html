@@ -156,9 +156,9 @@
   <thead>
     <tr>
       <th>Time</th>
-      <th>File</th>
       <th>Drone?</th>
       <th>Confidence</th>
+      <th>Frame</th>
     </tr>
   </thead>
   <tbody id="tbody">
@@ -201,12 +201,15 @@
         tbody.innerHTML = detections.map(d => {
           const time = new Date(d.timestamp).toLocaleTimeString();
           const isDrone = d.is_drone;
+          const img = d.image_url
+            ? `<img src="${d.image_url}" style="height:48px;border-radius:4px;cursor:pointer" onclick="window.open('${d.image_url}')">`
+            : '—';
           return `
             <tr class="${isDrone ? 'drone' : ''}">
               <td>${time}</td>
-              <td>${d.filename || '—'}</td>
               <td><span class="badge ${isDrone ? 'yes' : 'no'}">${isDrone ? 'YES' : 'NO'}</span></td>
               <td>${(d.confidence * 100).toFixed(1)}%</td>
+              <td>${img}</td>
             </tr>`;
         }).join("");
       }
