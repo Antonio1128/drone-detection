@@ -2,9 +2,14 @@ from fastapi import FastAPI, UploadFile, File, Header, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 from api.detector import run_inference
+from supabase import create_client
 import os
 
 API_KEY = os.environ.get("API_KEY", "dronedetect-secret")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://huqbekfyoorzveogebzn.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1cWJla2Z5b29yenZlb2dlYnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDI1NTEsImV4cCI6MjA5NjMxODU1MX0.6OjrlcpmtZZHXu-frTvXVL5ifkyXoxpq9MZpUKWx3po")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
 
@@ -15,11 +20,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-detections: list[dict] = []
-
 @app.get("/")
 def root():
-    return {"hellotest, status": "online"}
+    return {"status": "online"}
 
 @app.post("/detect/drone")
 async def detect_drone(image: UploadFile = File(...), x_api_key: str = Header(None)):
@@ -38,7 +41,7 @@ async def detect_drone(image: UploadFile = File(...), x_api_key: str = Header(No
         "timestamp": timestamp,
         "filename": image.filename,
     }
-    detections.append(result)
+    supabase.table("detections").insert(result).execute()
 
     return result
 
@@ -46,11 +49,12 @@ async def detect_drone(image: UploadFile = File(...), x_api_key: str = Header(No
 def get_detections(limit: int = 50, x_api_key: str = Header(None)):
     if x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
-    return {"detections": detections[-limit:]}
+    data = supabase.table("detections").select("*").order("timestamp", desc=True).limit(limit).execute()
+    return {"detections": data.data}
 
 @app.delete("/detections")
 def clear_detections(x_api_key: str = Header(None)):
     if x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
-    detections.clear()
+    supabase.table("detections").delete().neq("id", 0).execute()
     return {"status": "cleared"}
