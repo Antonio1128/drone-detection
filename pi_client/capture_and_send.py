@@ -4,7 +4,7 @@ import time
 
 SERVER_URL = "https://drone-detection-hp41.onrender.com/detect/drone"
 API_KEY = "dronedetect-secret"
-INTERVAL = 0.5  # secunde intre cadre trimise
+INTERVAL = 0.2  # secunde intre cadre trimise
 
 cap = cv2.VideoCapture(0)  # 0 = prima camera detectata
 
