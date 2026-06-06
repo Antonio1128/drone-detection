@@ -16,7 +16,7 @@ detections: list[dict] = []
 
 @app.get("/")
 def root():
-    return {"status": "online"}
+    return {"hellotest, status": "online"}
 
 @app.post("/detect/drone")
 async def detect_drone(image: UploadFile = File(...)):
