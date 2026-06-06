@@ -8,7 +8,8 @@ from ultralytics import YOLO
 from rf_classifier import RandomForestRFClassifier
 
 SERVER_URL = "https://drone-detection-hp41.onrender.com/report/detection"
-API_KEY = "dronedetect-secret"
+API_KEY = "a3f8c2d1e4b7a9f0c3d6e8b1a4f7c2d5e8b3a6f9c2d5e8b1a4f7c2d5e8b3a6f9";
+
 
 def trimite_la_server(frame, confidence, rf_activ):
     try:
