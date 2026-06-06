@@ -55,10 +55,13 @@ async def report_detection(
     image_url = None
 
     if image:
-        image_bytes = await image.read()
-        storage_path = f"{filename}"
-        supabase.storage.from_("alerts").upload(storage_path, image_bytes, {"content-type": "image/jpeg"})
-        image_url = f"{SUPABASE_URL}/storage/v1/object/public/alerts/{storage_path}"
+        try:
+            image_bytes = await image.read()
+            storage_path = f"{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}.jpg"
+            supabase.storage.from_("alerts").upload(storage_path, image_bytes, {"content-type": "image/jpeg"})
+            image_url = f"{SUPABASE_URL}/storage/v1/object/public/alerts/{storage_path}"
+        except Exception:
+            image_url = None
 
     result = {
         "is_drone": is_drone,
