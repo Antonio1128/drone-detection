@@ -1,6 +1,7 @@
-from fastapi import FastAPI, UploadFile, File, Header, HTTPException
+from fastapi import FastAPI, UploadFile, File, Header, HTTPException, Form
 from starlette.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
+from typing import Optional
 from api.detector import run_inference
 from supabase import create_client
 import os
@@ -51,6 +52,28 @@ def get_detections(limit: int = 50, x_api_key: str = Header(None)):
         raise HTTPException(status_code=401, detail="Invalid API key")
     data = supabase.table("detections").select("*").order("timestamp", desc=True).limit(limit).execute()
     return {"detections": data.data}
+
+@app.post("/report/detection")
+async def report_detection(
+    is_drone: bool = Form(...),
+    confidence: float = Form(...),
+    image: Optional[UploadFile] = File(None),
+    x_api_key: str = Header(None),
+):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+    timestamp = datetime.now(timezone.utc).isoformat()
+    filename = image.filename if image else "no_image"
+
+    result = {
+        "is_drone": is_drone,
+        "confidence": round(confidence, 4),
+        "timestamp": timestamp,
+        "filename": filename,
+    }
+    supabase.table("detections").insert(result).execute()
+    return result
 
 @app.delete("/detections")
 def clear_detections(x_api_key: str = Header(None)):

@@ -14,4 +14,6 @@ with open(image_path, "rb") as f:
         timeout=15
     )
 
-print(response.json())
+print("Status:", response.status_code)
+print("Raspuns:", response.text)
+
