@@ -43,10 +43,14 @@ async def detect_drone(image: UploadFile = File(...), x_api_key: str = Header(No
     return result
 
 @app.get("/detections")
-def get_detections(limit: int = 50):
+def get_detections(limit: int = 50, x_api_key: str = Header(None)):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
     return {"detections": detections[-limit:]}
 
 @app.delete("/detections")
-def clear_detections():
+def clear_detections(x_api_key: str = Header(None)):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
     detections.clear()
     return {"status": "cleared"}

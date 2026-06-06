@@ -156,10 +156,13 @@
 
 <script>
   const SERVER = "https://drone-detection-hp41.onrender.com";
+  const API_KEY = "dronedetect-secret";
 
   async function fetchDetections() {
     try {
-      const res = await fetch(`${SERVER}/detections`);
+      const res = await fetch(`${SERVER}/detections`, {
+        headers: { "x-api-key": API_KEY }
+      });
       const data = await res.json();
 
       document.getElementById("status-dot").className = "online";
