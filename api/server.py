@@ -2,7 +2,6 @@ from fastapi import FastAPI, UploadFile, File, Header, HTTPException, Form
 from starlette.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 from typing import Optional
-from api.detector import run_inference
 from supabase import create_client
 import os
 
@@ -25,26 +24,6 @@ app.add_middleware(
 def root():
     return {"status": "online"}
 
-@app.post("/detect/drone")
-async def detect_drone(image: UploadFile = File(...), x_api_key: str = Header(None)):
-    if x_api_key != API_KEY:
-        raise HTTPException(status_code=401, detail="Invalid API key")
-    contents = await image.read()
-    if not contents:
-        return {"error": "Empty file received"}
-
-    is_drone, confidence = run_inference(contents)
-    timestamp = datetime.now(timezone.utc).isoformat()
-
-    result = {
-        "is_drone": is_drone,
-        "confidence": confidence,
-        "timestamp": timestamp,
-        "filename": image.filename,
-    }
-    supabase.table("detections").insert(result).execute()
-
-    return result
 
 @app.get("/detections")
 def get_detections(limit: int = 50, x_api_key: str = Header(None)):
