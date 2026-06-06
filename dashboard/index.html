@@ -109,15 +109,29 @@
     .badge.no  { background: #22c55e22; color: #22c55e; border: 1px solid #22c55e; }
 
     #last-update { font-size: 0.75rem; color: #4b5563; margin-top: 16px; text-align: right; }
+
+    #clear-btn {
+      background: #7f1d1d;
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    #clear-btn:hover { background: #ef4444; color: white; }
   </style>
 </head>
 <body>
 
 <header>
   <h1>🛰 Ground Station</h1>
-  <div>
+  <div style="display:flex; align-items:center; gap:16px;">
     <span id="status-dot"></span>
     <span id="status-text">Connecting...</span>
+    <button id="clear-btn" onclick="clearDetections()">Clear detections</button>
   </div>
 </header>
 
@@ -168,7 +182,7 @@
       document.getElementById("status-dot").className = "online";
       document.getElementById("status-text").textContent = "Server online";
 
-      const detections = data.detections.slice().reverse();
+      const detections = data.detections;
       const total = detections.length;
       const drones = detections.filter(d => d.is_drone).length;
       const last = detections[0];
@@ -202,6 +216,15 @@
       document.getElementById("status-dot").className = "";
       document.getElementById("status-text").textContent = "Server offline";
     }
+  }
+
+  async function clearDetections() {
+    if (!confirm("Ștergi toate detecțiile?")) return;
+    await fetch(`${SERVER}/detections`, {
+      method: "DELETE",
+      headers: { "x-api-key": API_KEY }
+    });
+    fetchDetections();
   }
 
   fetchDetections();
