@@ -4,3 +4,18 @@ __pycache__/
 *.pyo
 .env
 drone-detection/
+.claude/
+
+# Modele ML (fisiere mari)
+*.pt
+*.pkl
+prj/runs/
+prj/alerte_drone/
+
+# IDE
+prj/.vs/
+prj/.vscode/
+
+# Imagini locale
+drona1.jpg
+*.jpg
