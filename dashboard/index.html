@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Drone Detection - Ground Station</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0f1e;
+      color: #e0e6f0;
+      font-family: 'Segoe UI', monospace;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+
+    h1 { font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; color: #7eb8f7; }
+
+    #status-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #444;
+      display: inline-block;
+      margin-right: 8px;
+    }
+    #status-dot.online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .card .label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+    .card .value { font-size: 2rem; font-weight: bold; margin-top: 8px; }
+    .card .value.red { color: #ef4444; }
+    .card .value.green { color: #22c55e; }
+    .card .value.blue { color: #7eb8f7; }
+
+    #alert-banner {
+      display: none;
+      background: #ef4444;
+      color: white;
+      text-align: center;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      margin-bottom: 24px;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #111827;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th {
+      background: #1f2937;
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6b7280;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-top: 1px solid #1f2937;
+      font-size: 0.9rem;
+    }
+
+    tr.drone td { background: #1a0a0a; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    .badge.yes { background: #ef444422; color: #ef4444; border: 1px solid #ef4444; }
+    .badge.no  { background: #22c55e22; color: #22c55e; border: 1px solid #22c55e; }
+
+    #last-update { font-size: 0.75rem; color: #4b5563; margin-top: 16px; text-align: right; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🛰 Ground Station</h1>
+  <div>
+    <span id="status-dot"></span>
+    <span id="status-text">Connecting...</span>
+  </div>
+</header>
+
+<div id="alert-banner">⚠ DRONE DETECTED</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="label">Total detections</div>
+    <div class="value blue" id="total">—</div>
+  </div>
+  <div class="card">
+    <div class="label">Drones detected</div>
+    <div class="value red" id="drones">—</div>
+  </div>
+  <div class="card">
+    <div class="label">Last confidence</div>
+    <div class="value green" id="confidence">—</div>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>File</th>
+      <th>Drone?</th>
+      <th>Confidence</th>
+    </tr>
+  </thead>
+  <tbody id="tbody">
+    <tr><td colspan="4" style="color:#4b5563; text-align:center;">No detections yet</td></tr>
+  </tbody>
+</table>
+
+<div id="last-update"></div>
+
+<script>
+  const SERVER = "https://drone-detection-hp41.onrender.com";
+
+  async function fetchDetections() {
+    try {
+      const res = await fetch(`${SERVER}/detections`);
+      const data = await res.json();
+
+      document.getElementById("status-dot").className = "online";
+      document.getElementById("status-text").textContent = "Server online";
+
+      const detections = data.detections.slice().reverse();
+      const total = detections.length;
+      const drones = detections.filter(d => d.is_drone).length;
+      const last = detections[0];
+
+      document.getElementById("total").textContent = total;
+      document.getElementById("drones").textContent = drones;
+      document.getElementById("confidence").textContent = last ? (last.confidence * 100).toFixed(1) + "%" : "—";
+
+      const alert = document.getElementById("alert-banner");
+      alert.style.display = (last && last.is_drone) ? "block" : "none";
+
+      const tbody = document.getElementById("tbody");
+      if (total === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="color:#4b5563; text-align:center;">No detections yet</td></tr>';
+      } else {
+        tbody.innerHTML = detections.map(d => {
+          const time = new Date(d.timestamp).toLocaleTimeString();
+          const isDrone = d.is_drone;
+          return `
+            <tr class="${isDrone ? 'drone' : ''}">
+              <td>${time}</td>
+              <td>${d.filename || '—'}</td>
+              <td><span class="badge ${isDrone ? 'yes' : 'no'}">${isDrone ? 'YES' : 'NO'}</span></td>
+              <td>${(d.confidence * 100).toFixed(1)}%</td>
+            </tr>`;
+        }).join("");
+      }
+
+      document.getElementById("last-update").textContent = "Last update: " + new Date().toLocaleTimeString();
+    } catch (e) {
+      document.getElementById("status-dot").className = "";
+      document.getElementById("status-text").textContent = "Server offline";
+    }
+  }
+
+  fetchDetections();
+  setInterval(fetchDetections, 3000);
+</script>
+
+</body>
+</html>

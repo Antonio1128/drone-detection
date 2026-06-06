@@ -1,7 +1,10 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Header, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 from api.detector import run_inference
+import os
+
+API_KEY = os.environ.get("API_KEY", "dronedetect-secret")
 
 app = FastAPI()
 
@@ -19,7 +22,9 @@ def root():
     return {"hellotest, status": "online"}
 
 @app.post("/detect/drone")
-async def detect_drone(image: UploadFile = File(...)):
+async def detect_drone(image: UploadFile = File(...), x_api_key: str = Header(None)):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
     contents = await image.read()
     if not contents:
         return {"error": "Empty file received"}
