@@ -1,6 +1,6 @@
 # Drone Detection System
 
-Sistem de detecție drone în timp real, dezvoltat pentru hackathon (an 1 informatică).
+Sistem de detecție drone în timp real, dezvoltat pentru hackathon.
 
 ## Arhitectură
 
