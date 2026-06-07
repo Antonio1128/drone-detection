@@ -4,3 +4,7 @@ python-multipart
 starlette
 requests
 supabase
+opencv-python
+numpy
+ultralytics
+roboflow
