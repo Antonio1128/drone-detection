@@ -73,6 +73,13 @@ async def report_detection(
     supabase.table("detections").insert(result).execute()
     return result
 
+@app.delete("/detections/{detection_id}")
+def delete_detection(detection_id: int, x_api_key: str = Header(None)):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    supabase.table("detections").delete().eq("id", detection_id).execute()
+    return {"status": "deleted"}
+
 @app.delete("/detections")
 def clear_detections(x_api_key: str = Header(None)):
     if x_api_key != API_KEY:

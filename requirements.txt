@@ -8,3 +8,6 @@ opencv-python
 numpy
 ultralytics
 roboflow
+torch
+torchvision
+torchaudio
