@@ -16,25 +16,27 @@ SERVER_URL = os.environ["SERVER_URL"]
 API_KEY = os.environ["API_KEY"]
 HMAC_SECRET = os.environ["HMAC_SECRET"]
 
-def trimite_la_server(frame, confidence, rf_activ):
+CLASS_NAMES = ["drone", "tank", "aircraft"]
+
+def trimite_la_server(frame, confidence, rf_activ, detected_class="drone"):
     try:
         _, buffer = cv2.imencode(".jpg", frame)
         image_bytes = buffer.tobytes()
         sensor_label = "AI+RF" if rf_activ else "AI"
-        filename = f"alerta_{sensor_label}_{time.strftime('%Y%m%d_%H%M%S')}.jpg"
+        filename = f"alerta_{detected_class}_{sensor_label}_{time.strftime('%Y%m%d_%H%M%S')}.jpg"
         timestamp_req = time.strftime("%Y-%m-%dT%H:%M:%S")
         message = f"{timestamp_req}:true:{str(round(confidence, 4))}"
         signature = hmac.new(HMAC_SECRET.encode(), message.encode(), hashlib.sha256).hexdigest()
-        
+
         response = requests.post(
             SERVER_URL,
-            data={"is_drone": "true", "confidence": str(round(confidence, 4)), "signature": signature   },
+            data={"is_drone": "true", "confidence": str(round(confidence, 4)), "detected_class": detected_class},
             files={"image": (filename, image_bytes, "image/jpeg")},
             headers={"x-api-key": API_KEY,"x-timestamp": timestamp_req,"x-signature": signature},
             timeout=10,
         )
         if response.status_code == 200:
-            print(f"[CLOUD] Alerta trimisa cu succes! Conf: {confidence:.2f}")
+            print(f"[CLOUD] Alerta trimisa! {detected_class.upper()} Conf: {confidence:.2f}")
         else:
             print(f"[CLOUD] Eroare server: {response.status_code} - {response.text}")
     except Exception as e:
@@ -42,7 +44,7 @@ def trimite_la_server(frame, confidence, rf_activ):
 
 # 1. Încărcăm modelul tău antrenat pe drone
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-model = YOLO(os.path.join(BASE_DIR, "runs", "detect", "drone_v2", "weights", "best.pt"))
+model = YOLO(os.path.join(BASE_DIR, "runs", "detect", "drone_v3", "weights", "best_f.pt"))
 
 # 2. Inițializăm filtrul de fundal (Toleranță mare la zgomot)
 back_sub = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=50, detectShadows=False)
@@ -77,7 +79,7 @@ while cap.isOpened():
         print(f"📡 [HARDWARE SDR] Stare antenă modificată! Scanare radio activă: {rf_hardware_trigger}")
     if key == ord('t') or key == ord('T'):
         print("[TEST] Simulez alertă manuală...")
-        threading.Thread(target=trimite_la_server, args=(frame, 0.99, rf_hardware_trigger), daemon=True).start()
+        threading.Thread(target=trimite_la_server, args=(frame, 0.99, rf_hardware_trigger, "drone"), daemon=True).start()
 
     # Apelăm clasificatorul Random Forest din fișierul extern
     rf_activ, rf_conf = rf_classifier.predict_signal(rf_hardware_trigger)
@@ -98,49 +100,51 @@ while cap.isOpened():
     
     drona_detectata_acum = False
     max_conf = 0.0
+    detected_class = "drone"
 
     for r in results:
         for box in r.boxes:
             x1, y1, x2, y2 = map(int, box.xyxy[0])
             visual_conf = float(box.conf[0])
-            
+            cls_idx = int(box.cls[0])
+            cls_name = CLASS_NAMES[cls_idx] if cls_idx < len(CLASS_NAMES) else "unknown"
+
             # Filtru de Dimensiune Minimă (Ștergem erorile microscopice)
             latime = x2 - x1
             inaltime = y2 - y1
             if latime < 30 or inaltime < 30:
                 continue
-                
+
             suprafata_totala = latime * inaltime
-            
+
             # Decupăm masca de mișcare din zona obiectului
             roi_mask = fg_mask[y1:y2, x1:x2]
             motion_pixels = cv2.countNonZero(roi_mask) if roi_mask.size > 0 else 0
-            
+
             # Calculăm densitatea mișcării
             procent_miscare = (motion_pixels / suprafata_totala) if suprafata_totala > 0 else 0
-            
+
             # Păstrăm obiectul doar dacă se mișcă real (densitate > 25%)
             if procent_miscare > 0.25:
                 drona_detectata_acum = True
-                
+
                 # === FUZIUNEA DE SENZORI PROPRIU-ZISĂ ===
                 if rf_activ:
-                    # Dacă antena prinde semnal: 60% Cameră + 40% Random Forest RF
                     final_conf = (visual_conf * 0.6) + (rf_conf * 0.4)
-                    color = (0, 255, 0) # VERDE: Confirmare Hibridă Totală
-                    label = f"DRONE [AI+RF] {final_conf:.2f} (M: {procent_miscare*100:.0f}%)"
+                    color = (0, 255, 0)
+                    label = f"{cls_name.upper()} [AI+RF] {final_conf:.2f} (M: {procent_miscare*100:.0f}%)"
                 else:
-                    # Dacă nu avem semnal radio: 100% bazat pe YOLO color
                     final_conf = visual_conf
-                    color = (255, 0, 0) # ALBASTRU: Doar confirmare vizuală
-                    label = f"drone [AI] {final_conf:.2f} (M: {procent_miscare*100:.0f}%)"
-                
+                    color = (255, 0, 0)
+                    label = f"{cls_name.upper()} [AI] {final_conf:.2f} (M: {procent_miscare*100:.0f}%)"
+
                 if final_conf > max_conf:
                     max_conf = final_conf
-                
+                    detected_class = cls_name
+
                 # Desenăm pe ecran
                 cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 2)
-                cv2.putText(annotated_frame, label, (x1, y1 - 10), 
+                cv2.putText(annotated_frame, label, (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
     # Sistemul automat de alerte pe disc (Scrie text și salvează poze)
@@ -161,7 +165,7 @@ while cap.isOpened():
         print(f"🚨 [SISTEM SUPREM] {ora_citibila} - Alerta salvată pe disc! Scor: {max_conf:.2f}")
         threading.Thread(
             target=trimite_la_server,
-            args=(annotated_frame, max_conf, rf_activ),
+            args=(annotated_frame, max_conf, rf_activ, detected_class),
             daemon=True,
         ).start()
 

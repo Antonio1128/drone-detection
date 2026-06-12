@@ -107,6 +107,9 @@
     }
     .badge.yes { background: #ef444422; color: #ef4444; border: 1px solid #ef4444; }
     .badge.no  { background: #22c55e22; color: #22c55e; border: 1px solid #22c55e; }
+    .badge.drone    { background: #ef444422; color: #ef4444; border: 1px solid #ef4444; }
+    .badge.tank     { background: #f9731622; color: #f97316; border: 1px solid #f97316; }
+    .badge.aircraft { background: #a855f722; color: #a855f7; border: 1px solid #a855f7; }
 
     #last-update { font-size: 0.75rem; color: #4b5563; margin-top: 16px; text-align: right; }
 
@@ -156,7 +159,7 @@
   <thead>
     <tr>
       <th>Time</th>
-      <th>Drone?</th>
+      <th>Detected</th>
       <th>Confidence</th>
       <th>Frame</th>
       <th></th>
@@ -193,7 +196,13 @@
       document.getElementById("confidence").textContent = last ? (last.confidence * 100).toFixed(1) + "%" : "—";
 
       const alert = document.getElementById("alert-banner");
-      alert.style.display = (last && last.is_drone) ? "block" : "none";
+      if (last && last.is_drone) {
+        const cls = (last.detected_class || "drone").toUpperCase();
+        alert.textContent = `⚠ ${cls} DETECTED`;
+        alert.style.display = "block";
+      } else {
+        alert.style.display = "none";
+      }
 
       const tbody = document.getElementById("tbody");
       if (total === 0) {
@@ -201,14 +210,14 @@
       } else {
         tbody.innerHTML = detections.map(d => {
           const time = new Date(d.timestamp).toLocaleTimeString();
-          const isDrone = d.is_drone;
+          const cls = d.detected_class || (d.is_drone ? 'drone' : 'safe');
           const img = d.image_url
             ? `<img src="${d.image_url}" style="height:48px;border-radius:4px;cursor:pointer" onclick="window.open('${d.image_url}')">`
             : '—';
           return `
-            <tr class="${isDrone ? 'drone' : ''}">
+            <tr class="${cls}">
               <td>${time}</td>
-              <td><span class="badge ${isDrone ? 'yes' : 'no'}">${isDrone ? 'YES' : 'NO'}</span></td>
+              <td><span class="badge ${cls}">${cls.toUpperCase()}</span></td>
               <td>${(d.confidence * 100).toFixed(1)}%</td>
               <td>${img}</td>
               <td><button onclick="deleteDetection(${d.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:1rem;">✕</button></td>

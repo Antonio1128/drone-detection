@@ -44,6 +44,7 @@ def get_detections(limit: int = 50, x_api_key: str = Header(None)):
 async def report_detection(
     is_drone: bool = Form(...),
     confidence: float = Form(...),
+    detected_class: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     x_api_key: str = Header(None),
     x_timestamp: str = Header(None),
@@ -89,6 +90,7 @@ async def report_detection(
     result = {
         "is_drone": is_drone,
         "confidence": round(confidence, 4),
+        "detected_class": detected_class or "drone",
         "timestamp": timestamp,
         "filename": safe_filename,
         "image_url": image_url,
