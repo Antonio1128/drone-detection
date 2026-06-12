@@ -40,7 +40,7 @@ def trimite_la_server(frame, confidence, rf_activ):
 
 # 1. Încărcăm modelul tău antrenat pe drone
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-model = YOLO(os.path.join(BASE_DIR, "runs", "detect", "train-7", "weights", "best.pt"))
+model = YOLO(os.path.join(BASE_DIR, "runs", "detect", "drone_v2", "weights", "best.pt"))
 
 # 2. Inițializăm filtrul de fundal (Toleranță mare la zgomot)
 back_sub = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=50, detectShadows=False)
