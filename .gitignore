@@ -6,6 +6,9 @@ __pycache__/
 drone-detection/
 .claude/
 
+# Arhiva (contine chei hardcodate si cod vechi)
+detection/arhiva/
+
 # Modele ML (fisiere mari)
 *.pt
 *.pkl

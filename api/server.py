@@ -1,12 +1,13 @@
-from fastapi import FastAPI, UploadFile, File, Header, HTTPException, Form
+from fastapi import FastAPI, UploadFile, File, Header, HTTPException, Form, Request
 from starlette.middleware.cors import CORSMiddleware
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 from supabase import create_client
 from dotenv import load_dotenv
 import os
 import hmac
 import hashlib
+import re
 
 load_dotenv()
 
@@ -14,15 +15,17 @@ API_KEY = os.environ["API_KEY"]
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.environ["SUPABASE_KEY"]
 HMAC_SECRET = os.environ["HMAC_SECRET"]
+ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "http://localhost,http://127.0.0.1").split(",")
+
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["x-api-key", "x-timestamp", "x-signature", "content-type"],
 )
 
 @app.get("/")
@@ -34,6 +37,8 @@ def root():
 def get_detections(limit: int = 50, x_api_key: str = Header(None)):
     if x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
+    if limit < 1 or limit > 100:
+        raise HTTPException(status_code=400, detail="limit must be between 1 and 100")
     data = supabase.table("detections").select("*").order("timestamp", desc=True).limit(limit).execute()
     return {"detections": data.data}
 
@@ -49,14 +54,30 @@ async def report_detection(
     if x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
+    if confidence < 0 or confidence > 1:
+        raise HTTPException(status_code=400, detail="confidence must be between 0 and 1")
+
+    # Validare timestamp — max 5 minute vechime (replay attack prevention)
+    try:
+        request_time = datetime.fromisoformat(x_timestamp)
+        if request_time.tzinfo is None:
+            request_time = request_time.replace(tzinfo=timezone.utc)
+        if abs((datetime.now(timezone.utc) - request_time).total_seconds()) > 300:
+            raise HTTPException(status_code=403, detail="Request expired")
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail="Invalid timestamp")
+
     mesaj = f"{x_timestamp}:true:{str(round(confidence, 4))}"
     expected = hmac.new(HMAC_SECRET.encode(), mesaj.encode(), hashlib.sha256).hexdigest()
     if not hmac.compare_digest(expected, x_signature or ""):
         raise HTTPException(status_code=403, detail="Invalid signature")
 
     timestamp = datetime.now(timezone.utc).isoformat()
-    filename = image.filename if image else "no_image"
     image_url = None
+
+    # Sanitizare filename
+    raw_filename = image.filename if image else "no_image"
+    safe_filename = re.sub(r"[^a-zA-Z0-9._-]", "_", os.path.basename(raw_filename))
 
     if image:
         try:
@@ -71,7 +92,7 @@ async def report_detection(
         "is_drone": is_drone,
         "confidence": round(confidence, 4),
         "timestamp": timestamp,
-        "filename": filename,
+        "filename": safe_filename,
         "image_url": image_url,
     }
     supabase.table("detections").insert(result).execute()
