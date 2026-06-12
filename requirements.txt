@@ -11,3 +11,4 @@ roboflow
 torch
 torchvision
 torchaudio
+python-dotenv

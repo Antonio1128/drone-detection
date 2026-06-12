@@ -3,13 +3,17 @@ from starlette.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 from typing import Optional
 from supabase import create_client
+from dotenv import load_dotenv
 import os
 import hmac
 import hashlib
-API_KEY = os.environ.get("API_KEY", "a3f8c2d1e4b7a9f0c3d6e8b1a4f7c2d5e8b3a6f9c2d5e8b1a4f7c2d5e8b3a6f9")
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://huqbekfyoorzveogebzn.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1cWJla2Z5b29yenZlb2dlYnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDI1NTEsImV4cCI6MjA5NjMxODU1MX0.6OjrlcpmtZZHXu-frTvXVL5ifkyXoxpq9MZpUKWx3po")
-HMAC_SECRET = os.environ.get("HMAC_SECRET", "ocheiesupersercreta1230")
+
+load_dotenv()
+
+API_KEY = os.environ["API_KEY"]
+SUPABASE_URL = os.environ["SUPABASE_URL"]
+SUPABASE_KEY = os.environ["SUPABASE_KEY"]
+HMAC_SECRET = os.environ["HMAC_SECRET"]
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()

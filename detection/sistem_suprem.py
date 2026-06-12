@@ -6,13 +6,15 @@ import threading
 import requests
 from ultralytics import YOLO
 from rf_classifier import RandomForestRFClassifier
+from dotenv import load_dotenv
 import hmac
 import hashlib
 
+load_dotenv()
 
-SERVER_URL = "https://drone-detection-hp41.onrender.com/report/detection"
-API_KEY = "a3f8c2d1e4b7a9f0c3d6e8b1a4f7c2d5e8b3a6f9c2d5e8b1a4f7c2d5e8b3a6f9"
-HMAC_SECRET= "ocheiesupersercreta1230"
+SERVER_URL = os.environ["SERVER_URL"]
+API_KEY = os.environ["API_KEY"]
+HMAC_SECRET = os.environ["HMAC_SECRET"]
 
 def trimite_la_server(frame, confidence, rf_activ):
     try:
