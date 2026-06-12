@@ -19,3 +19,6 @@ prj/.vscode/
 # Imagini locale
 drona1.jpg
 *.jpg
+
+*.zip
+*.rar

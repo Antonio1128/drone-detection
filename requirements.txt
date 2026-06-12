@@ -8,3 +8,9 @@ opencv-python
 numpy
 ultralytics
 roboflow
+<<<<<<< HEAD
+=======
+torch
+torchvision
+torchaudio
+>>>>>>> 6edbc2465ec0fc3badfe5d1034966bff10497646
