@@ -6,24 +6,26 @@ Sistem de detectie drone in timp real cu fuziune de senzori (camera + RF), dezvo
 
 ```
 [Drona proprie]
-  ├── Pi Camera Module 3  ──→ YOLO v8 (detectie vizuala)
-  ├── Antena SDR          ──→ Random Forest (clasificare semnal RF)
-  └── Raspberry Pi 4
-        ├── MOG2 Background Subtraction (confirmare miscare)
-        ├── Fuziune senzori (60% camera + 40% RF)
-        ├── Salveaza alerte local (SD card)
-        └── Trimite alerte la cloud (cand are conexiune)
+  ├── Pi Camera Module 3
+  └── Raspberry Pi 4 ──→ video stream WiFi (5 FPS)
+               ↓
+  [Laptop - Ground Station]
+  ├── YOLO v8 (detectie vizuala)
+  ├── MOG2 Background Subtraction (confirmare miscare)
+  ├── Random Forest (clasificare semnal RF)
+  ├── Fuziune senzori (60% camera + 40% RF)
+  └── Trimite alerte la cloud
                ↓
   [Server Cloud - Render + Supabase]
                ↓
-  [Ground Station Dashboard - browser]
+  [Dashboard - browser]
 ```
 
 ## Componente
 
 ### 1. Sistem Multi-Senzorial (`detection/sistem_suprem.py`)
 
-ML ruleaza **local pe Raspberry Pi**. Alertele confirmate sunt trimise automat la cloud.
+ML ruleaza **local pe laptop**. Pi-ul transmite video stream prin WiFi, laptopul ruleaza inferenta YOLO. Alertele confirmate sunt trimise automat la cloud.
 
 ```bash
 pip install -r requirements.txt
