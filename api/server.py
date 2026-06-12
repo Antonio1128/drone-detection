@@ -15,15 +15,13 @@ API_KEY = os.environ["API_KEY"]
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.environ["SUPABASE_KEY"]
 HMAC_SECRET = os.environ["HMAC_SECRET"]
-ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "http://localhost,http://127.0.0.1").split(",")
-
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["*"],
     allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["x-api-key", "x-timestamp", "x-signature", "content-type"],
 )
