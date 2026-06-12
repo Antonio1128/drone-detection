@@ -101,3 +101,6 @@
 [2026-06-12 04:57:27] ALERTĂ SUPREMĂ: Dronă confirmată! Scor: 0.60. Senzor Radio: INACTIV.
 [2026-06-12 04:57:29] ALERTĂ SUPREMĂ: Dronă confirmată! Scor: 0.54. Senzor Radio: INACTIV.
 [2026-06-12 04:57:34] ALERTĂ SUPREMĂ: Dronă confirmată! Scor: 0.54. Senzor Radio: INACTIV.
+[2026-06-12 05:26:58] ALERTĂ SUPREMĂ: Dronă confirmată! Scor: 0.60. Senzor Radio: INACTIV.
+[2026-06-12 05:27:04] ALERTĂ SUPREMĂ: Dronă confirmată! Scor: 1.00. Senzor Radio: INACTIV.
+[2026-06-12 05:27:09] ALERTĂ SUPREMĂ: Dronă confirmată! Scor: 0.57. Senzor Radio: INACTIV.
