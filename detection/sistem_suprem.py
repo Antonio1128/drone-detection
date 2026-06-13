@@ -24,7 +24,8 @@ def trimite_la_server(frame, confidence, rf_activ, detected_class="drone"):
         image_bytes = buffer.tobytes()
         sensor_label = "AI+RF" if rf_activ else "AI"
         filename = f"alerta_{detected_class}_{sensor_label}_{time.strftime('%Y%m%d_%H%M%S')}.jpg"
-        timestamp_req = time.strftime("%Y-%m-%dT%H:%M:%S")
+        from datetime import datetime, timezone
+        timestamp_req = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
         message = f"{timestamp_req}:true:{str(round(confidence, 4))}"
         signature = hmac.new(HMAC_SECRET.encode(), message.encode(), hashlib.sha256).hexdigest()
 
