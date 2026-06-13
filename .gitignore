@@ -9,11 +9,13 @@ drone-detection/
 # Arhiva (contine chei hardcodate si cod vechi)
 detection/arhiva/
 
-# Modele ML (fisiere mari)
+# Modele ML si dataset-uri (fisiere mari)
 *.pt
 *.pkl
-prj/runs/
-prj/alerte_drone/
+runs/
+detection/runs/
+detection/alerte_drone/
+detection/datasets/
 
 # IDE
 prj/.vs/
