@@ -40,6 +40,13 @@ def get_detections(limit: int = 50, x_api_key: str = Header(None)):
     data = supabase.table("detections").select("*").order("timestamp", desc=True).limit(limit).execute()
     return {"detections": data.data}
 
+@app.get("/public/detections")
+def get_detections_public(limit: int = 50):
+    if limit < 1 or limit > 100:
+        limit = 50
+    data = supabase.table("detections").select("*").order("timestamp", desc=True).limit(limit).execute()
+    return {"detections": data.data}
+
 @app.post("/report/detection")
 async def report_detection(
     is_drone: bool = Form(...),
