@@ -16,7 +16,7 @@ SERVER_URL = os.environ["SERVER_URL"]
 API_KEY = os.environ["API_KEY"]
 HMAC_SECRET = os.environ["HMAC_SECRET"]
 
-CLASS_NAMES = ["drone", "tank", "aircraft"]
+CLASS_NAMES = ["drone", "tank", "aircraft", "fire"]
 
 def trimite_la_server(frame, confidence, rf_activ, detected_class="drone"):
     try:
@@ -45,7 +45,7 @@ def trimite_la_server(frame, confidence, rf_activ, detected_class="drone"):
 
 # 1. Încărcăm modelul tău antrenat pe drone
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-model = YOLO(os.path.join(BASE_DIR, "runs", "detect", "drone_v3", "weights", "best_f.pt"))
+model = YOLO(os.path.join(BASE_DIR, "runs", "detect", "drone_v4", "weights", "best_ff.pt"))
 
 # 2. Inițializăm filtrul de fundal (Toleranță mare la zgomot)
 back_sub = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=50, detectShadows=False)
