@@ -147,8 +147,20 @@
     <div class="value blue" id="total">—</div>
   </div>
   <div class="card">
-    <div class="label">Drones detected</div>
-    <div class="value red" id="drones">—</div>
+    <div class="label">Drones</div>
+    <div class="value red" id="count-drone">—</div>
+  </div>
+  <div class="card">
+    <div class="label">Tanks</div>
+    <div class="value" style="color:#f97316" id="count-tank">—</div>
+  </div>
+  <div class="card">
+    <div class="label">Aircraft</div>
+    <div class="value" style="color:#a855f7" id="count-aircraft">—</div>
+  </div>
+  <div class="card">
+    <div class="label">Fire</div>
+    <div class="value" style="color:#fbbf24" id="count-fire">—</div>
   </div>
   <div class="card">
     <div class="label">Last confidence</div>
@@ -187,11 +199,13 @@
 
       const detections = data.detections;
       const total = detections.length;
-      const drones = detections.filter(d => d.is_drone).length;
       const last = detections[0];
 
       document.getElementById("total").textContent = total;
-      document.getElementById("drones").textContent = drones;
+      document.getElementById("count-drone").textContent = detections.filter(d => d.detected_class === "drone").length;
+      document.getElementById("count-tank").textContent = detections.filter(d => d.detected_class === "tank").length;
+      document.getElementById("count-aircraft").textContent = detections.filter(d => d.detected_class === "aircraft").length;
+      document.getElementById("count-fire").textContent = detections.filter(d => d.detected_class === "fire").length;
       document.getElementById("confidence").textContent = last ? (last.confidence * 100).toFixed(1) + "%" : "—";
 
       const alert = document.getElementById("alert-banner");
