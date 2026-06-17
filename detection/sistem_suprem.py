@@ -62,7 +62,8 @@ if not os.path.exists(output_folder):
 rf_hardware_trigger = False
 ultimul_timp_salvare = 0
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0)  # camera locala
+# cap = cv2.VideoCapture("tcp://0.0.0.0:5000")  # stream de la Pi
 print("\n=== SMT (SISTEM MULTI-SENZORIAL) SUPREM PORNIT ===")
 print("-> Toate filtrele de curățare (Tavan, Densitate, Dimensiune) sunt ACTIVE.")
 print("-> APASĂ scurt pe tasta 'R' pentru a porni/opri scanarea antenei radio (Random Forest)!")
