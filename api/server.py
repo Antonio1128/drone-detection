@@ -105,6 +105,32 @@ async def report_detection(
     supabase.table("detections").insert(result).execute()
     return result
 
+@app.post("/report/gas")
+async def report_gas(
+    request: Request,
+    x_api_key: str = Header(None),
+):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    body = await request.json()
+    ppm = body.get("ppm")
+    is_dangerous = body.get("is_dangerous", False)
+    timestamp = datetime.now(timezone.utc).isoformat()
+    if ppm is None or not isinstance(ppm, (int, float)) or ppm < 0:
+        raise HTTPException(status_code=400, detail="Invalid ppm value")
+    result = {"ppm": round(ppm, 2), "is_dangerous": is_dangerous, "timestamp": timestamp}
+    supabase.table("gas_readings").insert(result).execute()
+    return result
+
+@app.get("/gas")
+def get_gas(limit: int = 50, x_api_key: str = Header(None)):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    if limit < 1 or limit > 100:
+        limit = 50
+    data = supabase.table("gas_readings").select("*").order("timestamp", desc=True).limit(limit).execute()
+    return {"readings": data.data}
+
 @app.delete("/detections/{detection_id}")
 def delete_detection(detection_id: int, x_api_key: str = Header(None)):
     if x_api_key != API_KEY:

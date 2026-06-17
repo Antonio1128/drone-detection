@@ -35,8 +35,8 @@
 
     .cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
       margin-bottom: 32px;
     }
 
@@ -44,11 +44,11 @@
       background: #111827;
       border: 1px solid #1f2937;
       border-radius: 12px;
-      padding: 20px;
+      padding: 12px 14px;
     }
 
-    .card .label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
-    .card .value { font-size: 2rem; font-weight: bold; margin-top: 8px; }
+    .card .label { font-size: 0.65rem; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+    .card .value { font-size: 1.5rem; font-weight: bold; margin-top: 6px; }
     .card .value.red { color: #ef4444; }
     .card .value.green { color: #22c55e; }
     .card .value.blue { color: #7eb8f7; }
@@ -126,6 +126,28 @@
       text-transform: uppercase;
     }
     #clear-btn:hover { background: #ef4444; color: white; }
+
+    #gas-banner {
+      display: none;
+      background: #f97316;
+      color: white;
+      text-align: center;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      margin-bottom: 24px;
+      animation: pulse 1s infinite;
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin: 32px 0 12px;
+    }
   </style>
 </head>
 <body>
@@ -140,6 +162,7 @@
 </header>
 
 <div id="alert-banner">⚠ DRONE DETECTED</div>
+<div id="gas-banner">⚠ DANGEROUS GAS DETECTED</div>
 
 <div class="cards">
   <div class="card">
@@ -166,8 +189,13 @@
     <div class="label">Last confidence</div>
     <div class="value green" id="confidence">—</div>
   </div>
+  <div class="card">
+    <div class="label">Gas (ppm)</div>
+    <div class="value" style="color:#f97316" id="gas-ppm">—</div>
+  </div>
 </div>
 
+<p class="section-title">Detections</p>
 <table>
   <thead>
     <tr>
@@ -184,6 +212,20 @@
 </table>
 
 <div id="last-update"></div>
+
+<p class="section-title">Gas Readings</p>
+<table>
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>PPM</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody id="gas-tbody">
+    <tr><td colspan="3" style="color:#4b5563; text-align:center;">No readings yet</td></tr>
+  </tbody>
+</table>
 
 <script>
   const SERVER = "https://drone-detection-hp41.onrender.com";
@@ -263,8 +305,41 @@
     fetchDetections();
   }
 
+  async function fetchGas() {
+    try {
+      const res = await fetch(`${SERVER}/gas`, {
+        headers: { "x-api-key": API_KEY }
+      });
+      const data = await res.json();
+      const readings = data.readings;
+      const last = readings[0];
+
+      document.getElementById("gas-ppm").textContent = last ? last.ppm + " ppm" : "—";
+
+      const gasBanner = document.getElementById("gas-banner");
+      gasBanner.style.display = (last && last.is_dangerous) ? "block" : "none";
+
+      const tbody = document.getElementById("gas-tbody");
+      if (!readings.length) {
+        tbody.innerHTML = '<tr><td colspan="3" style="color:#4b5563; text-align:center;">No readings yet</td></tr>';
+      } else {
+        tbody.innerHTML = readings.map(r => {
+          const time = new Date(r.timestamp).toLocaleString('ro-RO', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+          const danger = r.is_dangerous;
+          return `<tr>
+            <td>${time}</td>
+            <td>${r.ppm} ppm</td>
+            <td><span class="badge ${danger ? 'yes' : 'no'}">${danger ? 'DANGER' : 'SAFE'}</span></td>
+          </tr>`;
+        }).join("");
+      }
+    } catch (e) {}
+  }
+
   fetchDetections();
+  fetchGas();
   setInterval(fetchDetections, 3000);
+  setInterval(fetchGas, 3000);
 </script>
 
 </body>
