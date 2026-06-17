@@ -12,3 +12,5 @@ torch
 torchvision
 torchaudio
 python-dotenv
+adafruit-circuitpython-ads1x15
+adafruit-blinka
