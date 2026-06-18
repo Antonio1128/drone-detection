@@ -53,9 +53,8 @@
     .card .value.green { color: #22c55e; }
     .card .value.blue { color: #7eb8f7; }
 
-    #alert-banner {
+    .banner {
       display: none;
-      background: #ef4444;
       color: white;
       text-align: center;
       padding: 16px;
@@ -66,6 +65,8 @@
       margin-bottom: 24px;
       animation: pulse 1s infinite;
     }
+    #alert-banner { background: #ef4444; }
+    #gas-banner   { background: #f97316; }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; }
@@ -127,19 +128,18 @@
     }
     #clear-btn:hover { background: #ef4444; color: white; }
 
-    #gas-banner {
-      display: none;
-      background: #f97316;
-      color: white;
-      text-align: center;
-      padding: 16px;
-      border-radius: 12px;
-      font-size: 1.2rem;
-      font-weight: bold;
-      letter-spacing: 2px;
-      margin-bottom: 24px;
-      animation: pulse 1s infinite;
+    #gas-btn {
+      background: #1f2937;
+      color: #7eb8f7;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
+    #gas-btn:hover { background: #374151; }
 
     .section-title {
       font-size: 0.85rem;
@@ -147,6 +147,33 @@
       text-transform: uppercase;
       letter-spacing: 2px;
       margin: 32px 0 12px;
+    }
+
+    .gas-card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .gas-card .big-ppm {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #f97316;
+    }
+    .gas-card .gas-label {
+      font-size: 0.75rem;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .gas-card .gas-status {
+      font-size: 1rem;
+      font-weight: bold;
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -157,66 +184,88 @@
   <div style="display:flex; align-items:center; gap:16px;">
     <span id="status-dot"></span>
     <span id="status-text">Connecting...</span>
-    <button id="gas-toggle-btn" onclick="toggleGas()" style="background:#1f2937;color:#7eb8f7;border:1px solid #374151;border-radius:8px;padding:8px 18px;font-size:0.8rem;cursor:pointer;letter-spacing:1px;text-transform:uppercase;">Gas Monitor</button>
+    <button id="gas-btn" onclick="showGas()">Gas Monitor</button>
     <button id="clear-btn" onclick="clearDetections()">Clear detections</button>
   </div>
 </header>
 
-<div id="alert-banner">⚠ DRONE DETECTED</div>
-<div id="gas-banner">⚠ DANGEROUS GAS DETECTED</div>
+<!-- PAGINA PRINCIPALA -->
+<div id="main-view">
+  <div id="alert-banner" class="banner">⚠ DRONE DETECTED</div>
+  <div id="gas-banner" class="banner">⚠ DANGEROUS GAS DETECTED</div>
 
-<div class="cards">
-  <div class="card">
-    <div class="label">Total detections</div>
-    <div class="value blue" id="total">—</div>
+  <div class="cards">
+    <div class="card">
+      <div class="label">Total detections</div>
+      <div class="value blue" id="total">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Drones</div>
+      <div class="value red" id="count-drone">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Tanks</div>
+      <div class="value" style="color:#f97316" id="count-tank">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Aircraft</div>
+      <div class="value" style="color:#a855f7" id="count-aircraft">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Fire</div>
+      <div class="value" style="color:#fbbf24" id="count-fire">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Last confidence</div>
+      <div class="value green" id="confidence">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Gas (ppm)</div>
+      <div class="value" style="color:#f97316" id="gas-ppm">—</div>
+    </div>
   </div>
-  <div class="card">
-    <div class="label">Drones</div>
-    <div class="value red" id="count-drone">—</div>
-  </div>
-  <div class="card">
-    <div class="label">Tanks</div>
-    <div class="value" style="color:#f97316" id="count-tank">—</div>
-  </div>
-  <div class="card">
-    <div class="label">Aircraft</div>
-    <div class="value" style="color:#a855f7" id="count-aircraft">—</div>
-  </div>
-  <div class="card">
-    <div class="label">Fire</div>
-    <div class="value" style="color:#fbbf24" id="count-fire">—</div>
-  </div>
-  <div class="card">
-    <div class="label">Last confidence</div>
-    <div class="value green" id="confidence">—</div>
-  </div>
-  <div class="card">
-    <div class="label">Gas (ppm)</div>
-    <div class="value" style="color:#f97316" id="gas-ppm">—</div>
-  </div>
+
+  <p class="section-title">Detections</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Detected</th>
+        <th>Confidence</th>
+        <th>Frame</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="5" style="color:#4b5563; text-align:center;">No detections yet</td></tr>
+    </tbody>
+  </table>
+
+  <div id="last-update"></div>
 </div>
 
-<p class="section-title">Detections</p>
-<table>
-  <thead>
-    <tr>
-      <th>Time</th>
-      <th>Detected</th>
-      <th>Confidence</th>
-      <th>Frame</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody id="tbody">
-    <tr><td colspan="5" style="color:#4b5563; text-align:center;">No detections yet</td></tr>
-  </tbody>
-</table>
+<!-- PAGINA GAS MONITOR -->
+<div id="gas-view" style="display:none;">
+  <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+    <button onclick="showMain()" style="background:#1f2937;color:#e0e6f0;border:1px solid #374151;border-radius:8px;padding:8px 18px;font-size:0.8rem;cursor:pointer;letter-spacing:1px;text-transform:uppercase;">← Back</button>
+    <span class="section-title" style="margin:0;">Gas Monitor</span>
+  </div>
 
-<div id="last-update"></div>
+  <div class="gas-card">
+    <div>
+      <div class="gas-label">Current reading</div>
+      <div class="big-ppm" id="gas-big-ppm">—</div>
+    </div>
+    <div>
+      <div class="gas-label">Status</div>
+      <div class="gas-status" id="gas-big-status">—</div>
+    </div>
+    <div>
+      <div class="gas-label">Threshold</div>
+      <div class="gas-status" style="color:#6b7280;">300 ppm</div>
+    </div>
+  </div>
 
-<p class="section-title">Gas Monitor</p>
-
-<div id="gas-section" style="display:none;">
   <table>
     <thead>
       <tr>
@@ -234,6 +283,20 @@
 <script>
   const SERVER = "https://drone-detection-hp41.onrender.com";
   const API_KEY = "f7a3d2e9b6c4f1a8e5d2b9c6f3a0e7d4b1c8f5a2e9d6c3b0f7a4e1d8c5b2f9a6";
+
+  function showGas() {
+    document.getElementById("main-view").style.display = "none";
+    document.getElementById("gas-view").style.display = "block";
+    document.getElementById("gas-btn").style.display = "none";
+    document.getElementById("clear-btn").style.display = "none";
+  }
+
+  function showMain() {
+    document.getElementById("gas-view").style.display = "none";
+    document.getElementById("main-view").style.display = "block";
+    document.getElementById("gas-btn").style.display = "inline-block";
+    document.getElementById("clear-btn").style.display = "inline-block";
+  }
 
   async function fetchDetections() {
     try {
@@ -265,7 +328,7 @@
 
       const tbody = document.getElementById("tbody");
       if (total === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="color:#4b5563; text-align:center;">No detections yet</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="color:#4b5563; text-align:center;">No detections yet</td></tr>';
       } else {
         tbody.innerHTML = detections.map(d => {
           const time = new Date(d.timestamp).toLocaleString('ro-RO', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
@@ -299,7 +362,6 @@
     fetchDetections();
   }
 
-
   async function clearDetections() {
     if (!confirm("Ștergi toate detecțiile?")) return;
     await fetch(`${SERVER}/detections`, {
@@ -318,10 +380,20 @@
       const readings = data.readings;
       const last = readings[0];
 
-      document.getElementById("gas-ppm").textContent = last ? last.ppm + " ppm" : "—";
+      const ppmText = last ? last.ppm + " ppm" : "—";
+      document.getElementById("gas-ppm").textContent = ppmText;
+      document.getElementById("gas-big-ppm").textContent = ppmText;
 
       const gasBanner = document.getElementById("gas-banner");
-      gasBanner.style.display = (last && last.is_dangerous) ? "block" : "none";
+      if (last && last.is_dangerous) {
+        gasBanner.style.display = "block";
+        document.getElementById("gas-big-status").textContent = "DANGER";
+        document.getElementById("gas-big-status").style.color = "#ef4444";
+      } else {
+        gasBanner.style.display = "none";
+        document.getElementById("gas-big-status").textContent = last ? "SAFE" : "—";
+        document.getElementById("gas-big-status").style.color = "#22c55e";
+      }
 
       const tbody = document.getElementById("gas-tbody");
       if (!readings.length) {
@@ -338,14 +410,6 @@
         }).join("");
       }
     } catch (e) {}
-  }
-
-  function toggleGas() {
-    const section = document.getElementById("gas-section");
-    const btn = document.getElementById("gas-toggle-btn");
-    const visible = section.style.display !== "none";
-    section.style.display = visible ? "none" : "block";
-    btn.textContent = visible ? "Show" : "Hide";
   }
 
   fetchDetections();
