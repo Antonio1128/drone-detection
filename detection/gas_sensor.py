@@ -27,7 +27,7 @@ def read_gas_ppm():
 
     # Conversie aproximativa tensiune → PPM pentru MQ-2
     # Rs/R0 ratio — calibrat in aer curat (R0 ≈ tensiune la aer curat)
-    R0 = 1.0
+    R0 = 0.031  # calibrat in aer curat la 3.84V
     if voltage <= 0:
         return 0.0
     rs = (5.0 - voltage) / voltage
