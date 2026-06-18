@@ -11,7 +11,8 @@ API_KEY = os.environ["API_KEY"]
 
 # Prag periculos (ajustat dupa calibrare)
 GAS_THRESHOLD_PPM = 300
-INTERVAL = 2.0  # secunde intre citiri
+INTERVAL = 2.0       # secunde intre citiri locale
+SEND_INTERVAL = 15.0 # secunde intre trimiteri la server
 
 def read_gas_ppm():
     import board
@@ -59,6 +60,8 @@ if __name__ == "__main__":
     time.sleep(60)
     print("Sensor ready.\n")
 
+    last_send = 0
+
     while True:
         try:
             ppm = read_gas_ppm()
@@ -66,8 +69,10 @@ if __name__ == "__main__":
             status = "DANGER" if is_dangerous else "safe"
             print(f"[{datetime.now().strftime('%H:%M:%S')}] Gas: {ppm} ppm — {status}")
 
-            if is_dangerous:
+            now = time.time()
+            if is_dangerous or (now - last_send >= SEND_INTERVAL):
                 trimite_la_server(ppm, is_dangerous)
+                last_send = now
 
         except Exception as e:
             print(f"[SENSOR] Read error: {e}")
