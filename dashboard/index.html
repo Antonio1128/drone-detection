@@ -213,19 +213,25 @@
 
 <div id="last-update"></div>
 
-<p class="section-title">Gas Readings</p>
-<table>
-  <thead>
-    <tr>
-      <th>Time</th>
-      <th>PPM</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody id="gas-tbody">
-    <tr><td colspan="3" style="color:#4b5563; text-align:center;">No readings yet</td></tr>
-  </tbody>
-</table>
+<div style="display:flex; align-items:center; gap:16px; margin:32px 0 12px;">
+  <p class="section-title" style="margin:0">Gas Monitor</p>
+  <button onclick="toggleGas()" id="gas-toggle-btn" style="background:#1f2937;color:#7eb8f7;border:1px solid #374151;border-radius:8px;padding:6px 16px;font-size:0.8rem;cursor:pointer;letter-spacing:1px;text-transform:uppercase;">Show</button>
+</div>
+
+<div id="gas-section" style="display:none;">
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>PPM</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="gas-tbody">
+      <tr><td colspan="3" style="color:#4b5563; text-align:center;">No readings yet</td></tr>
+    </tbody>
+  </table>
+</div>
 
 <script>
   const SERVER = "https://drone-detection-hp41.onrender.com";
@@ -334,6 +340,14 @@
         }).join("");
       }
     } catch (e) {}
+  }
+
+  function toggleGas() {
+    const section = document.getElementById("gas-section");
+    const btn = document.getElementById("gas-toggle-btn");
+    const visible = section.style.display !== "none";
+    section.style.display = visible ? "none" : "block";
+    btn.textContent = visible ? "Show" : "Hide";
   }
 
   fetchDetections();
