@@ -21,7 +21,7 @@ def read_gas_ppm():
 
     i2c = busio.I2C(board.SCL, board.SDA)
     ads = ADS.ADS1115(i2c)
-    chan = AnalogIn(ads, ADS.P0)
+    chan = AnalogIn(ads, 0)
 
     voltage = chan.voltage
 
