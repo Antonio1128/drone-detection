@@ -24,6 +24,7 @@ print("Streaming... Press Ctrl+C to stop.")
 
 interval = 1.0 / FPS
 
+frame_count = 0
 while True:
     start = time.time()
     frame = picam2.capture_array()
@@ -34,6 +35,9 @@ while True:
     size = len(data)
 
     sock.sendall(struct.pack(">L", size) + data)
+    frame_count += 1
+    if frame_count % 15 == 0:
+        print(f"Trimis {frame_count} frames ({size} bytes)")
 
     elapsed = time.time() - start
     sleep_time = interval - elapsed
