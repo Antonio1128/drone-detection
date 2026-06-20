@@ -14,7 +14,7 @@ QUALITY = int(os.getenv("QUALITY", 80))
 FPS = int(os.getenv("FPS", 15))
 
 picam2 = Picamera2()
-picam2.configure(picam2.create_preview_configuration(main={"size": (640, 480), "format": "RGB888"}))
+picam2.configure(picam2.create_video_configuration(main={"size": (640, 480), "format": "RGB888"}))
 picam2.start()
 time.sleep(2)
 
