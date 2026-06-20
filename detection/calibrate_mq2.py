@@ -25,7 +25,8 @@ def calibrate():
         v = chan.voltage
         if v > 0:
             readings.append((5.0 - v) / v)
-        print(f"  [{i+1}/{SAMPLES}] Voltage: {v:.4f}V  Rs/RL: {(5.0-v)/v if v>0 else 'N/A':.4f}")
+        rs_str = f"{(5.0-v)/v:.4f}" if v > 0 else "N/A"
+        print(f"  [{i+1}/{SAMPLES}] Voltage: {v:.4f}V  Rs/RL: {rs_str}")
         time.sleep(0.1)
 
     rs_clean = sum(readings) / len(readings)
@@ -39,3 +40,4 @@ def calibrate():
 
 if __name__ == "__main__":
     calibrate()
+
