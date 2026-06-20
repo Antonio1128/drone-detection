@@ -16,6 +16,7 @@ FPS = int(os.getenv("FPS", 15))
 picam2 = Picamera2()
 picam2.configure(picam2.create_preview_configuration(main={"size": (640, 480)}))
 picam2.start()
+time.sleep(2)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect((LAPTOP_IP, PORT))
