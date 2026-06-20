@@ -14,7 +14,7 @@ QUALITY = int(os.getenv("QUALITY", 80))
 FPS = int(os.getenv("FPS", 15))
 
 picam2 = Picamera2()
-picam2.configure(picam2.create_preview_configuration(main={"size": (640, 480)}))
+picam2.configure(picam2.create_preview_configuration(main={"size": (640, 480), "format": "RGB888"}))
 picam2.start()
 time.sleep(2)
 
@@ -24,20 +24,20 @@ print(f"Connected to laptop {LAPTOP_IP}:{PORT}")
 print("Streaming... Press Ctrl+C to stop.")
 
 interval = 1.0 / FPS
-
-import numpy as np
 frame_count = 0
+
 while True:
     start = time.time()
-    # TEST: frame sintetic verde
-    frame_bgr = np.zeros((480, 640, 3), dtype=np.uint8)
-    frame_bgr[:] = (0, 200, 0)
+
+    frame = picam2.capture_array("main")
+    frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
     _, buffer = cv2.imencode(".jpg", frame_bgr, [cv2.IMWRITE_JPEG_QUALITY, QUALITY])
     data = buffer.tobytes()
     size = len(data)
 
     sock.sendall(struct.pack(">L", size) + data)
+
     frame_count += 1
     if frame_count % 15 == 0:
         print(f"Trimis {frame_count} frames ({size} bytes)")
