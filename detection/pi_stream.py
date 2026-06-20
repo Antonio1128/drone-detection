@@ -25,11 +25,13 @@ print("Streaming... Press Ctrl+C to stop.")
 
 interval = 1.0 / FPS
 
+import numpy as np
 frame_count = 0
 while True:
     start = time.time()
-    frame = picam2.capture_array()
-    frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    # TEST: frame sintetic verde
+    frame_bgr = np.zeros((480, 640, 3), dtype=np.uint8)
+    frame_bgr[:] = (0, 200, 0)
 
     _, buffer = cv2.imencode(".jpg", frame_bgr, [cv2.IMWRITE_JPEG_QUALITY, QUALITY])
     data = buffer.tobytes()
