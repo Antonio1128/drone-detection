@@ -22,6 +22,9 @@ class PiStream:
         self.conn, addr = server.accept()
         print(f"[STREAM] Pi conectat: {addr}")
         self.data = b""
+        self.latest_frame = None
+        self.lock = threading.Lock()
+        threading.Thread(target=self._recv_loop, daemon=True).start()
 
     def _recv_exactly(self, n):
         while len(self.data) < n:
@@ -33,16 +36,25 @@ class PiStream:
         self.data = self.data[n:]
         return result
 
+    def _recv_loop(self):
+        while True:
+            header = self._recv_exactly(4)
+            if header is None:
+                break
+            size = struct.unpack(">L", header)[0]
+            frame_data = self._recv_exactly(size)
+            if frame_data is None:
+                break
+            frame = cv2.imdecode(np.frombuffer(frame_data, dtype=np.uint8), cv2.IMREAD_COLOR)
+            if frame is not None:
+                with self.lock:
+                    self.latest_frame = frame
+
     def read(self):
-        header = self._recv_exactly(4)
-        if header is None:
-            return False, None
-        size = struct.unpack(">L", header)[0]
-        frame_data = self._recv_exactly(size)
-        if frame_data is None:
-            return False, None
-        frame = cv2.imdecode(np.frombuffer(frame_data, dtype=np.uint8), cv2.IMREAD_COLOR)
-        return frame is not None, frame
+        with self.lock:
+            if self.latest_frame is None:
+                return False, None
+            return True, self.latest_frame.copy()
 
     def isOpened(self):
         return True
