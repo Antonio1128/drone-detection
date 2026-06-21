@@ -4,7 +4,6 @@ import struct
 import time
 import os
 from dotenv import load_dotenv
-from picamera2 import Picamera2
 
 load_dotenv()
 
@@ -13,10 +12,10 @@ PORT = int(os.getenv("PORT", 5000))
 QUALITY = int(os.getenv("QUALITY", 80))
 FPS = int(os.getenv("FPS", 15))
 
-picam2 = Picamera2()
-picam2.configure(picam2.create_video_configuration(main={"size": (640, 480), "format": "RGB888"}))
-picam2.start()
-time.sleep(2)
+cap = cv2.VideoCapture(1, cv2.CAP_V4L2)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+cap.set(cv2.CAP_PROP_FPS, FPS)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect((LAPTOP_IP, PORT))
@@ -26,26 +25,26 @@ print("Streaming... Press Ctrl+C to stop.")
 interval = 1.0 / FPS
 frame_count = 0
 
-while True:
-    start = time.time()
+try:
+    while True:
+        start = time.time()
+        ret, frame = cap.read()
+        if not ret:
+            print("Frame error")
+            continue
 
-    frame = picam2.capture_array("main")
-    frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, QUALITY])
+        data = buffer.tobytes()
+        sock.sendall(struct.pack(">L", len(data)) + data)
 
-    _, buffer = cv2.imencode(".jpg", frame_bgr, [cv2.IMWRITE_JPEG_QUALITY, QUALITY])
-    data = buffer.tobytes()
-    size = len(data)
+        frame_count += 1
+        if frame_count % 15 == 0:
+            print(f"Trimis {frame_count} frames")
 
-    sock.sendall(struct.pack(">L", size) + data)
-
-    frame_count += 1
-    if frame_count % 15 == 0:
-        print(f"Trimis {frame_count} frames ({size} bytes)")
-
-    elapsed = time.time() - start
-    sleep_time = interval - elapsed
-    if sleep_time > 0:
-        time.sleep(sleep_time)
-
-picam2.stop()
-sock.close()
+        elapsed = time.time() - start
+        sleep_time = interval - elapsed
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+except KeyboardInterrupt:
+    cap.release()
+    sock.close()
