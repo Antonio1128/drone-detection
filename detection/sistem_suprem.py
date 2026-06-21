@@ -51,10 +51,11 @@ class PiStream:
                     self.latest_frame = frame
 
     def read(self):
-        with self.lock:
-            if self.latest_frame is None:
-                return False, None
-            return True, self.latest_frame.copy()
+        while True:
+            with self.lock:
+                if self.latest_frame is not None:
+                    return True, self.latest_frame.copy()
+            time.sleep(0.01)
 
     def isOpened(self):
         return True
