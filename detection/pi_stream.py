@@ -3,9 +3,14 @@ import socket
 import struct
 import time
 import os
+import subprocess
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+subprocess.Popen([sys.executable, os.path.join(BASE_DIR, "gas_sensor.py")])
 
 LAPTOP_IP = os.getenv("LAPTOP_IP", "192.168.1.100")
 PORT = int(os.getenv("PORT", 5000))
