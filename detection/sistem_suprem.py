@@ -4,11 +4,51 @@ import time
 import os
 import threading
 import requests
+import socket
+import struct
 from ultralytics import YOLO
 from rf_classifier import RandomForestRFClassifier
 from dotenv import load_dotenv
 import hmac
 import hashlib
+
+class PiStream:
+    def __init__(self, port=5000):
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(("0.0.0.0", port))
+        server.listen(1)
+        print(f"[STREAM] Astept Pi pe portul {port}...")
+        self.conn, addr = server.accept()
+        print(f"[STREAM] Pi conectat: {addr}")
+        self.data = b""
+
+    def _recv_exactly(self, n):
+        while len(self.data) < n:
+            chunk = self.conn.recv(4096)
+            if not chunk:
+                return None
+            self.data += chunk
+        result = self.data[:n]
+        self.data = self.data[n:]
+        return result
+
+    def read(self):
+        header = self._recv_exactly(4)
+        if header is None:
+            return False, None
+        size = struct.unpack(">L", header)[0]
+        frame_data = self._recv_exactly(size)
+        if frame_data is None:
+            return False, None
+        frame = cv2.imdecode(np.frombuffer(frame_data, dtype=np.uint8), cv2.IMREAD_COLOR)
+        return frame is not None, frame
+
+    def isOpened(self):
+        return True
+
+    def release(self):
+        self.conn.close()
 
 load_dotenv()
 
@@ -62,7 +102,7 @@ if not os.path.exists(output_folder):
 rf_hardware_trigger = False
 ultimul_timp_salvare = 0
 
-cap = cv2.VideoCapture(1, cv2.CAP_V4L2)  # camera USB pe Pi
+cap = PiStream(port=5000)  # primeste stream de la Pi
 # cap = cv2.VideoCapture("tcp://0.0.0.0:5000")  # stream de la Pi
 print("\n=== SMT (SISTEM MULTI-SENZORIAL) SUPREM PORNIT ===")
 print("-> Toate filtrele de curățare (Tavan, Densitate, Dimensiune) sunt ACTIVE.")
