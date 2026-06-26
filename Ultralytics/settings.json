@@ -1,0 +1,21 @@
+{
+  "settings_version": "0.0.6",
+  "datasets_dir": "D:\\facultate\\defense_xhack\\drone-detection\\datasets",
+  "weights_dir": "weights",
+  "runs_dir": "runs",
+  "uuid": "07f26b9d2cf7e2bde347cff4ccfa6db75a0915fba594b0c0e95762110190601a",
+  "sync": true,
+  "api_key": "",
+  "openai_api_key": "",
+  "clearml": true,
+  "comet": true,
+  "dvc": true,
+  "hub": true,
+  "mlflow": true,
+  "neptune": true,
+  "raytune": true,
+  "tensorboard": false,
+  "wandb": false,
+  "vscode_msg": true,
+  "openvino_msg": true
+}

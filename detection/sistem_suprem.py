@@ -14,12 +14,12 @@ import hashlib
 
 class PiStream:
     def __init__(self, port=5000):
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server.bind(("0.0.0.0", port))
-        server.listen(1)
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server.bind(("0.0.0.0", port))
+        self.server.listen(1)
         print(f"[STREAM] Astept Pi pe portul {port}...")
-        self.conn, addr = server.accept()
+        self.conn, addr = self.server.accept()
         print(f"[STREAM] Pi conectat: {addr}")
         self.data = b""
         self.latest_frame = None
@@ -36,15 +36,27 @@ class PiStream:
         self.data = self.data[n:]
         return result
 
+    def _wait_for_reconnect(self):
+        try:
+            self.conn.close()
+        except:
+            pass
+        print("[STREAM] Conexiune pierduta. Astept reconectare Pi...")
+        self.conn, addr = self.server.accept()
+        self.data = b""
+        print(f"[STREAM] Pi reconectat: {addr}")
+
     def _recv_loop(self):
         while True:
             header = self._recv_exactly(4)
             if header is None:
-                break
+                self._wait_for_reconnect()
+                continue
             size = struct.unpack(">L", header)[0]
             frame_data = self._recv_exactly(size)
             if frame_data is None:
-                break
+                self._wait_for_reconnect()
+                continue
             frame = cv2.imdecode(np.frombuffer(frame_data, dtype=np.uint8), cv2.IMREAD_COLOR)
             if frame is not None:
                 with self.lock:
@@ -116,7 +128,8 @@ rf_hardware_trigger = False
 ultimul_timp_salvare = 0
 
 cap = PiStream(port=5000)  # primeste stream de la Pi
-# cap = cv2.VideoCapture("tcp://0.0.0.0:5000")  # stream de la Pi
+#cap = cv2.VideoCapture("tcp://0.0.0.0:5000") 
+#cap = cv2.VideoCapture(1) 
 print("\n=== SMT (SISTEM MULTI-SENZORIAL) SUPREM PORNIT ===")
 print("-> Toate filtrele de curățare (Tavan, Densitate, Dimensiune) sunt ACTIVE.")
 print("-> APASĂ scurt pe tasta 'R' pentru a porni/opri scanarea antenei radio (Random Forest)!")
@@ -149,8 +162,8 @@ while cap.isOpened():
     fg_mask = cv2.morphologyEx(fg_mask, cv2.MORPH_CLOSE, kernel)
     fg_mask = cv2.dilate(fg_mask, kernel, iterations=1)
 
-    # Rulăm AI-ul vizual (Strictețe crescută conf=0.50)
-    results = model(frame, stream=True, conf=0.50)
+    # Rulăm AI-ul vizual (Strictețe crescută conf=0.70 )
+    results = model(frame, stream=True, conf=0.70)
     annotated_frame = frame.copy()
     
     drona_detectata_acum = False

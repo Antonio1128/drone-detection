@@ -141,6 +141,19 @@
     }
     #gas-btn:hover { background: #374151; }
 
+    #cam-btn {
+      background: #1f2937;
+      color: #7eb8f7;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    #cam-btn:hover { background: #374151; }
+
     .section-title {
       font-size: 0.85rem;
       color: #6b7280;
@@ -184,6 +197,7 @@
   <div style="display:flex; align-items:center; gap:16px;">
     <span id="status-dot"></span>
     <span id="status-text">Connecting...</span>
+    <button id="cam-btn" onclick="showCamera()">Live Camera</button>
     <button id="gas-btn" onclick="showGas()">Gas Monitor</button>
     <button id="clear-btn" onclick="clearDetections()">Clear detections</button>
   </div>
@@ -225,11 +239,6 @@
     </div>
   </div>
 
-  <p class="section-title">Live Camera</p>
-  <div style="margin-bottom:24px; background:#111827; border:1px solid #1f2937; border-radius:12px; padding:12px; display:inline-block;">
-    <img src="http://100.81.144.57:8080/video" style="width:640px; height:480px; border-radius:8px; display:block;" onerror="this.style.opacity='0.3'" />
-  </div>
-
   <p class="section-title">Detections</p>
   <table>
     <thead>
@@ -247,6 +256,17 @@
   </table>
 
   <div id="last-update"></div>
+</div>
+
+<!-- PAGINA CAMERA -->
+<div id="camera-view" style="display:none;">
+  <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+    <button onclick="showMain()" style="background:#1f2937;color:#e0e6f0;border:1px solid #374151;border-radius:8px;padding:8px 18px;font-size:0.8rem;cursor:pointer;letter-spacing:1px;text-transform:uppercase;">← Back</button>
+    <span class="section-title" style="margin:0;">Live Camera</span>
+  </div>
+  <div style="background:#111827; border:1px solid #1f2937; border-radius:12px; padding:16px; display:flex; justify-content:center;">
+    <img src="http://100.81.144.57:8080/video" style="width:960px; height:720px; border-radius:8px; display:block;" />
+  </div>
 </div>
 
 <!-- PAGINA GAS MONITOR -->
@@ -289,8 +309,15 @@
   const SERVER = "https://drone-detection-hp41.onrender.com";
   const API_KEY = "f7a3d2e9b6c4f1a8e5d2b9c6f3a0e7d4b1c8f5a2e9d6c3b0f7a4e1d8c5b2f9a6";
 
+  function showCamera() {
+    document.getElementById("main-view").style.display = "none";
+    document.getElementById("gas-view").style.display = "none";
+    document.getElementById("camera-view").style.display = "block";
+  }
+
   function showGas() {
     document.getElementById("main-view").style.display = "none";
+    document.getElementById("camera-view").style.display = "none";
     document.getElementById("gas-view").style.display = "block";
     document.getElementById("gas-btn").style.display = "none";
     document.getElementById("clear-btn").style.display = "none";
@@ -298,6 +325,7 @@
 
   function showMain() {
     document.getElementById("gas-view").style.display = "none";
+    document.getElementById("camera-view").style.display = "none";
     document.getElementById("main-view").style.display = "block";
     document.getElementById("gas-btn").style.display = "inline-block";
     document.getElementById("clear-btn").style.display = "inline-block";

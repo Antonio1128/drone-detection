@@ -5,7 +5,17 @@ import numpy as np
 
 PORT = 5000
 
+def recv_exactly(conn, n):
+    data = b""
+    while len(data) < n:
+        chunk = conn.recv(n - len(data))
+        if not chunk:
+            return None
+        data += chunk
+    return data
+
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind(("0.0.0.0", PORT))
 server.listen(1)
 print(f"Waiting for Pi on port {PORT}...")
@@ -13,34 +23,27 @@ print(f"Waiting for Pi on port {PORT}...")
 conn, addr = server.accept()
 print(f"Pi connected from {addr}")
 
-data = b""
-payload_size = struct.calcsize(">L")
-
+frame_count = 0
 while True:
-    # Primeste marimea frame-ului
-    while len(data) < payload_size:
-        packet = conn.recv(4096)
-        if not packet:
-            break
-        data += packet
+    header = recv_exactly(conn, 4)
+    if header is None:
+        print("Conexiune inchisa.")
+        break
 
-    packed_size = data[:payload_size]
-    data = data[payload_size:]
-    frame_size = struct.unpack(">L", packed_size)[0]
-
-    # Primeste frame-ul complet
-    while len(data) < frame_size:
-        packet = conn.recv(4096)
-        if not packet:
-            break
-        data += packet
-
-    frame_data = data[:frame_size]
-    data = data[frame_size:]
+    frame_size = struct.unpack(">L", header)[0]
+    frame_data = recv_exactly(conn, frame_size)
+    if frame_data is None:
+        print("Frame incomplet.")
+        break
 
     frame = cv2.imdecode(np.frombuffer(frame_data, dtype=np.uint8), cv2.IMREAD_COLOR)
     if frame is None:
+        print("Frame None - eroare decodare")
         continue
+
+    frame_count += 1
+    if frame_count % 15 == 0:
+        print(f"Frame {frame_count} primit: {frame.shape}")
 
     cv2.imshow("Pi Camera Stream", frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
